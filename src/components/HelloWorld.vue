@@ -1,22 +1,13 @@
 <template>
   <div class="hello">
-    <h1>{{ msg }}</h1>
-    <h2>Essential Links</h2>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank">Twitter</a></li>
-      <br>
-      <li><a href="http://vuejs-templates.github.io/webpack/" target="_blank">Docs for This Template</a></li>
-    </ul>
-    <h2>Ecosystem</h2>
-    <ul>
-      <li><a href="http://router.vuejs.org/" target="_blank">vue-router</a></li>
-      <li><a href="http://vuex.vuejs.org/" target="_blank">vuex</a></li>
-      <li><a href="http://vue-loader.vuejs.org/" target="_blank">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank">awesome-vue</a></li>
-    </ul>
+    <b-row>
+      <b-jumbotron class="text-center">
+        <h1 class="display-3">{{title}}</h1>
+        <p class="lead">{{tip}}</p>
+        <hr class="my-4">
+        <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
+      </b-jumbotron>
+    </b-row>
   </div>
 </template>
 
@@ -31,7 +22,7 @@
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style lang="scss"scoped>
 h1, h2 {
   font-weight: normal;
 }
@@ -48,5 +39,27 @@ li {
 
 a {
   color: #42b983;
+}
+$cell-side : 100px;
+$queen-side : $cell-side * 0.9;
+table td{
+  width: $cell-side;
+  height: $cell-side;
+  text-align: center;
+}
+.cell{
+  background: black;
+}
+.queen{
+  width: $queen-side;
+  height: $queen-side;
+}
+.jumbotron{
+  width: 100%;
+}
+@for $i from 1 to 10 {
+  .flex-#{$i}{
+    flex: $i;
+  }
 }
 </style>

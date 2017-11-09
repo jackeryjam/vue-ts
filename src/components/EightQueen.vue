@@ -156,6 +156,15 @@
 
     @Watch('stepRunState')
     stepRunStateChange (val: string) {
+      console.log(val)
+      if (val === 'auto run') {
+        let payload = {
+          'size': 13
+        }
+        $.get(API.solution, payload).then((data, state) => {
+          // console.log(data)
+        })
+      }
     }
 
     check () {

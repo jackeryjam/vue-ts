@@ -87,6 +87,9 @@
         </b-card>
       </b-card-group>
     </b-row>
+    <b-modal v-model="modal.show" :title="modal.title" @ok="modal.handleOk != undefined ? modal.handleOk : ''">
+      <p class="my-4">{{modal.content}}</p>
+    </b-modal>
   </b-container>
 </template>
 
@@ -95,6 +98,16 @@
   import { } from 'bootstrap-vue/lib/components'
   import $ from 'jquery'
   import { API } from '../service'
+  
+  interface handleFun{
+    ():void
+  }
+  interface Modal {
+      show: boolean;
+      title?: string;
+      content?: string;
+      handleOk?: handleFun;
+  }
 
   @Component({
   })
@@ -110,6 +123,8 @@
     directRunScale: number = 6
     runSpeed: number = 1
     stepRunState: string = ''
+    modalShow: Boolean = false
+    modal:Modal = { show: false }
 
     mounted () {
       this.chessBoard = this.creatBoard(this.boardScale)
@@ -133,7 +148,6 @@
 
     changeQueen (x, y) {
       this.chessBoard[x].splice(y, 1, !this.chessBoard[x][y])
-      console.log(this.chessBoard)
     }
 
     changeStepRunState (state: string) {
@@ -148,8 +162,14 @@
       let payload = {
         'chessBoard': JSON.stringify(this.chessBoard)
       }
-      $.post(API.check, payload, function (data, status) {
-        console.log('data: ' + data + 'state: ' + status)
+      $.post(API.check, payload).then((data, state) => {
+        if (state !== 'success') return
+        console.log(data)
+        this.modal = {
+          show: true,
+          title: 'result',
+          content: data.isLegal ? 'Congradulation! Your input is legal.' : 'Illegal!!!'
+        }
       })
     }
   }

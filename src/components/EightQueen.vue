@@ -1,5 +1,5 @@
 <template>
-  <b-container>
+  <b-container :fluid="boardScale >= 10">
     <b-row>
       <b-jumbotron class="text-center">
         <h1 class="display-3">{{title}}</h1>
@@ -9,13 +9,13 @@
       </b-jumbotron>
     </b-row>
     <b-row class="d-flex pb-4">
-      <b-card-group deck class="flex-1" :class="{ 'mr-2': !(mode == 'runMode' && runMode == 'getResultDirectly')}">
-        <b-card>
+      <b-card-group deck class="flex-1 mr-2">
+        <b-card mw-40>
           <h2 slot="header" class="mb-0">dashboard</h2>
           <b-form>
             <b-form-group :label="'Scale of the chess board is <b>' + boardScale + '</b>'" label-for="chess-board-scale"
                           description="The scale greater then will not show in UI.">
-              <b-form-input type="range" min="2" max="8" step="1" 
+              <b-form-input type="range" min="2" max="12" step="1" 
                             class="form-control" id="chess-board-scale" 
                             v-model="boardScale"
               ></b-form-input>
@@ -52,28 +52,17 @@
                 </b-form-group>
               </span>
               <span :class="{ 'd-none': runMode != 'getResultDirectly'}">
-                <h5 class="mt-3">In this mode, you can directly get the result and see the successful answers in the follow.Or you can input the greater scale and your email, once the result come out,you can receive a email.</h5>
-                <b-form-group :label="'Scale of the run directly is  <b>' + directRunScale + '</b>'" label-for="direct-run-scale"
-                              description="The scale greater then will not show in UI.">
-                  <b-form-input type="range" min="2" max="16" step="1" 
-                                class="form-control" id="direct-run-scale" 
-                                v-model="directRunScale"
-                  ></b-form-input>
+                <h5 class="mt-3">In this mode, you can directly get the result and see the successful answers in the follow as the scale you like.The total solutions is {{solution.solutionNum}}.This is the No.{{directResult + 1}} result</h5>
                 </b-form-group> 
-                <b-form-group id="emailInputtGroup"
-                              label="Email address:" label-for="emailInput"
-                              description="We'll never share your email with anyone else.">
-                  <b-form-input id="emailInput"
-                                type="email" v-model="email" required
-                                placeholder="Enter email"
-                  ></b-form-input>
-                </b-form-group>
+                <b-button variant="primary" @click="changeDirectRes(-1)">Previous result</b-button>
+                <b-button variant="primary" @click="changeDirectRes(1)">next result</b-button>
+                <br>
               </span>
             </span>
           </b-form>
         </b-card>
       </b-card-group>
-      <b-card-group :class="{ 'd-none': mode == 'runMode' && runMode == 'getResultDirectly'}">
+      <b-card-group>
         <b-card no-body> 
           <b-card-body class="d-flex flex-column justify-content-center">
             <table border="1">
@@ -109,6 +98,16 @@
       handleOk?: handleFun;
   }
 
+  interface Solution {
+    left: Array < Array< Array<boolean> > >;
+    middle: Array < Array< Array<boolean> > >;
+  }
+  interface SolutionRes {
+      size?: number;
+      solutionNum?: number;
+      solutions?: Solution;
+  }
+
   @Component({
   })
   export default class EightQueen extends Vue {
@@ -120,12 +119,12 @@
     mode: string = 'checkMode'
     runMode: string = 'stepByStep'
     email: string = ''
-    directRunScale: number = 6
+    directResult: number = 0
     runSpeed: number = 1
     stepRunState: string = ''
     modalShow: Boolean = false
     modal:Modal = { show: false }
-
+    solution: SolutionRes = {}
     mounted () {
       this.chessBoard = this.creatBoard(this.boardScale)
     }
@@ -133,6 +132,20 @@
     @Watch('boardScale')
     boardScaleChange (val) {
       this.chessBoard = this.creatBoard(parseInt(val))
+      if (this.runMode === 'getResultDirectly') {
+        this.getResult()
+      }
+    }
+
+    @Watch('directResult')
+    directResultChange (val) {
+      if (this.solution === null) return
+      this.chessBoard = this.getSolution(this.directResult)
+    }
+
+    changeDirectRes (val: string) {
+      let num = parseInt(val)
+      this.directResult = (num + this.directResult) % this.solution.solutionNum
     }
 
     creatBoard (scale: number): Array< Array<boolean> > {
@@ -154,16 +167,11 @@
       this.stepRunState = state
     }
 
-    @Watch('stepRunState')
-    stepRunStateChange (val: string) {
-      console.log(val)
+    @Watch('runMode')
+    runModeChange (val) {
       if (val === 'auto run') {
-        let payload = {
-          'size': 13
-        }
-        $.get(API.solution, payload).then((data, state) => {
-          // console.log(data)
-        })
+      } else if (val === 'getResultDirectly') {
+        this.getResult()
       }
     }
 
@@ -173,13 +181,35 @@
       }
       $.post(API.check, payload).then((data, state) => {
         if (state !== 'success') return
-        console.log(data)
         this.modal = {
           show: true,
           title: 'result',
           content: data.isLegal ? 'Congradulation! Your input is legal.' : 'Illegal!!!'
         }
       })
+    }
+
+    getResult () {
+      this.directResult = 0
+      let payload = {
+        'size': this.boardScale
+      }
+      $.get(API.solution, payload).then((data, state) => {
+        this.solution = data
+        this.chessBoard = this.solution.solutions.left[this.directResult]
+      })
+    }
+
+    getSolution (index: number):Array< Array<boolean> > {
+      let left = this.solution.solutions.left.length
+      let middle = this.solution.solutions.middle.length
+      if (index < left) {
+        return this.solution.solutions.left[index]
+      } else if (index < left + middle) {
+        return this.solution.solutions.middle[index - left]
+      } else {
+        return this.solution.solutions.left[index - left - middle].map(val => [...val].reverse())
+      }
     }
   }
 </script>
